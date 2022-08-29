@@ -4065,6 +4065,8 @@ class huobi(Exchange):
             # 'sl_order_price': self.price_to_precision(symbol, price),
             # 'sl_order_price_type': 'limit',  # limit，optimal_5，optimal_10，optimal_20
         }
+        if offset:
+            params["offset"] = offset
         stopLossOrderPrice = self.safe_string(params, 'sl_order_price')
         stopLossTriggerPrice = self.safe_string(params, 'sl_trigger_price')
         takeProfitOrderPrice = self.safe_string(params, 'tp_order_price')
