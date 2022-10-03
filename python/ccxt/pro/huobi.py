@@ -1859,6 +1859,8 @@ class huobi(Exchange, ccxt.async_support.huobi):
                 for i in range(0, len(rawTrades)):
                     trade = rawTrades[i]
                     parsedTrade = self.parse_trade(trade, market)
+                    trade_id, _, num = parsedTrade["info"]["id"].split('-')
+                    parsedTrade["id"] = f'{trade_id}-{num}'
                     # add extra params(side, type, ...) coming from the order
                     parsedTrade = self.extend(parsedTrade, extendParams)
                     cachedTrades.append(parsedTrade)
