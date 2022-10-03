@@ -136,8 +136,71 @@ class huobi(Exchange, ccxt.async_support.huobi):
         if topic == 'market.{marketId}.ticker' and market['type'] != 'spot':
             raise BadRequest(self.id + ' watchTicker() with name market.{marketId}.ticker is only allowed for spot markets, use market.{marketId}.detail instead')
         messageHash = self.implode_params(topic, {'marketId': market['id']})
+        # TODO(youknowone): check how it is going
+        # if market['spot']:
+        #     messageHash = 'market.{}.ticker'.format(market['id'])
+        # else:
+        #     messageHash = 'market.{}.depth.size_20.high_freq'.format(market['id'])
         url = self.get_url_by_market_type(market['type'], market['linear'])
         return await self.subscribe_public(url, symbol, messageHash, None, params)
+
+    def parse_depth_to_ticker(self, ticker, market):
+        marketId = self.safe_string_2(ticker, 'symbol', 'contract_code')
+        symbol = self.safe_symbol(marketId, market)
+        timestamp = self.safe_integer(ticker, 'ts')
+        bid, bidVolume = ticker['bids'][0]
+        ask, askVolume = ticker['asks'][0]
+        return self.safe_ticker({
+            'symbol': symbol,
+            'timestamp': timestamp,
+            'datetime': self.iso8601(timestamp),
+            'high': None,
+            'low': None,
+            'bid': bid,
+            'bidVolume': bidVolume,
+            'ask': ask,
+            'askVolume': askVolume,
+            'vwap': None,
+            'open': open,
+            'close': None,
+            'last': None,
+            'previousClose': None,
+            'change': None,
+            'percentage': None,
+            'average': None,
+            'baseVolume': None,
+            'quoteVolume': None,
+            'info': ticker,
+        }, market)
+
+    def handle_depth(self, client, message):
+        # {
+        #   'ch': 'market.BTC-USDT.depth.size_20.high_freq',
+        #   'tick': {
+        #       'asks': [[20102.1, 10507], [20102.3, 1001], [20102.8, 1], [20102.9, 21], [20103, 1001], [20103.4, 18], [20103.7, 12], [20103.8, 3], [20103.9, 51], [20104, 1001], [201041, 1], [20104.2, 1301], [20104.3, 4], [20104.5, 51], [20104.9, 24], [20105, 1001], [20105.2, 31], [20105.3, 32], [20105.8, 24], [20106, 11]],
+        #       'bids': [[20102, 5743], [20101.1, 3012], [20100, 101], [20099.9, 4], [20099.8, 1], [20099.7, 15], [20099.5, 20], [20099.4, 18], [20099.3, 467], [20099.1, 1803], [20099,12], [20098.9, 114], [20098.5, 500], [20098.2, 469], [20097.7, 24], [20097.6, 1202], [20097.5, 467], [20097.4, 474], [20097, 400], [20096.9, 466]],
+        #       'ch': 'market.BTC-USDT.depth.size_20.high_freq',
+        #       'event': 'snapshot',
+        #       'id': 116324755304,
+        #       'mrid': 116324755304,
+        #       'ts': 1662120400039,
+        #       'version': 1843856594
+        #   },
+        #   'ts': 1662120400040
+        # }
+        tick = self.safe_value(message, 'tick', {})
+        ch = self.safe_string(message, 'ch')
+        parts = ch.split('.')
+        marketId = self.safe_string(parts, 1)
+        market = self.safe_market(marketId)
+        ticker = self.parse_depth_to_ticker(tick, market)
+        timestamp = self.safe_value(message, 'ts')
+        ticker['timestamp'] = timestamp
+        ticker['datetime'] = self.iso8601(timestamp)
+        symbol = ticker['symbol']
+        self.tickers[symbol] = ticker
+        client.resolve(ticker, ch)
+        return message
 
     def handle_ticker(self, client, message):
         #
@@ -1511,6 +1574,7 @@ class huobi(Exchange, ccxt.async_support.huobi):
                 'ticker': self.handle_ticker,
                 'trade': self.handle_trades,
                 'kline': self.handle_ohlcv,
+                'depth': self.handle_depth,
             }
             method = self.safe_value(methods, methodName)
             if method is None:
