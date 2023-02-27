@@ -6471,7 +6471,7 @@ class huobi extends Exchange {
             $omitted = $this->omit($account, array( 'positions' ));
             $positions = $this->safe_value($account, 'positions');
             $position = null;
-            if ($market['future'] && $market['inverse']) {
+            if (($market['future'] && $market['inverse']) || $market['swap']) {
                 for ($i = 0; $i < count($positions); $i++) {
                     $entry = $positions[$i];
                     if ($entry['contract_code'] === $market['id']) {
