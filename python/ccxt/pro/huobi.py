@@ -1574,7 +1574,6 @@ class huobi(Exchange, ccxt.async_support.huobi):
                 'ticker': self.handle_ticker,
                 'trade': self.handle_trades,
                 'kline': self.handle_ohlcv,
-                'depth': self.handle_depth,
             }
             method = self.safe_value(methods, methodName)
             if method is None:
