@@ -33,6 +33,7 @@ class krakenfutures(Exchange):
             'version': 'v3',
             'userAgent': None,
             'rateLimit': 600,
+            'pro': True,
             'has': {
                 'CORS': None,
                 'spot': False,

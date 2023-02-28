@@ -197,6 +197,7 @@ const pro = {
     'idex':                    require ('./js/pro/idex.js'),
     'independentreserve':      require ('./js/pro/independentreserve.js'),
     'kraken':                  require ('./js/pro/kraken.js'),
+    'krakenfutures':           require ('./js/pro/krakenfutures.js'),
     'kucoin':                  require ('./js/pro/kucoin.js'),
     'kucoinfutures':           require ('./js/pro/kucoinfutures.js'),
     'luno':                    require ('./js/pro/luno.js'),
