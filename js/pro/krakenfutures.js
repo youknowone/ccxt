@@ -90,28 +90,28 @@ module.exports = class krakenfutures extends krakenfuturesRest {
         const symbol = market['symbol'];
         const messageHash = name + ':' + symbol;
         const timestamp = this.milliseconds ();
-        const result = {
+        const result = this.safeTicker ({
             'symbol': symbol,
             'timestamp': timestamp,
             'datetime': this.iso8601 (timestamp),
             'high': undefined,
             'low': undefined,
-            'bid': this.safeFloat (message, 'bid'),
-            'bidVolume': this.safeFloat (message, 'bid_size'),
-            'ask': this.safeFloat (message, 'ask'),
-            'askVolume': this.safeFloat (message, 'ask_size'),
+            'bid': this.safeString (message, 'bid'),
+            'bidVolume': this.safeString (message, 'bid_size'),
+            'ask': this.safeString (message, 'ask'),
+            'askVolume': this.safeString (message, 'ask_size'),
             'vwap': undefined,
             'open': undefined,
             'close': undefined,
-            'last': this.safeFloat (message, 'last'),
+            'last': this.safeString (message, 'last'),
             'previousClose': undefined,
             'change': undefined,
             'percentage': undefined,
             'average': undefined,
-            'baseVolume': this.safeFloat (message, 'volume'),
-            'quoteVolume': this.safeFloat (message, 'volumeQuote'),
+            'baseVolume': this.safeString (message, 'volume'),
+            'quoteVolume': this.safeString (message, 'volumeQuote'),
             'info': message,
-        };
+        }, market);
         this.tickers[symbol] = result;
         client.resolve (result, messageHash);
     }
@@ -159,28 +159,6 @@ module.exports = class krakenfutures extends krakenfuturesRest {
         //
         const event = this.safeString (message, 'event');
         client.resolve (message, event);
-    }
-
-    async authenticate (params = {}) {
-        const url = this.urls['api']['ws']['private'];
-        const client = this.client (url);
-        const authenticated = 'authenticated';
-        let subscription = this.safeValue (client.subscriptions, authenticated);
-        if (subscription === undefined) {
-            const response = await this.privatePostGetWebSocketsToken (params);
-            //
-            //     {
-            //         "error":[],
-            //         "result":{
-            //             "token":"xeAQ\/RCChBYNVh53sTv1yZ5H4wIbwDF20PiHtTF+4UI",
-            //             "expires":900
-            //         }
-            //     }
-            //
-            subscription = this.safeValue (response, 'result');
-            client.subscriptions[authenticated] = subscription;
-        }
-        return this.safeString (subscription, 'token');
     }
 
     handleSubscriptionStatus (client, message) {
